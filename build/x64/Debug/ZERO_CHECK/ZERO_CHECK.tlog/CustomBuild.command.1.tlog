@@ -1,0 +1,10 @@
+^C:\OPEN-CV PROJECTS\OPEN-CV-INTRO\IMAGE-PROCESSING\BUILD\CMAKEFILES\9F244BB7FE06D2935162F09433C07785\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/OPEN-CV Projects/open-cv-intro/Image-Processing" "-BC:/OPEN-CV Projects/open-cv-intro/Image-Processing/build" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "C:/OPEN-CV Projects/open-cv-intro/Image-Processing/build/opencvtest.sln"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
