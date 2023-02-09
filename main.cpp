@@ -5,37 +5,77 @@
 using namespace cv;
 using namespace std;
 
+void getContours(Mat imgDil, Mat img);
+
 int main(int argc, char **argv)
 {
 
-  string path = "C:\\OPEN-CV Projects\\open-cv-intro\\Image-Processing\\Resources\\lambo.png";
+  string path = "C:\\OPEN-CV Projects\\open-cv-intro\\Image-Processing\\Resources\\shapes.png";
   Mat img = imread(path);
-  Mat imgHSV, mask;
-  cvtColor(img, imgHSV, COLOR_BGR2HSV);
-  int hmin = 0, smin = 110, vmin = 153;
-  int hmax = 90, smax = 240, vmax = 255;
+  Mat imgGray, imgBlur, imgCanny, imgDil;
 
-  namedWindow("Trackbars", (640, 200));
-  createTrackbar("Hue Min", "Trackbars", &hmin, 179);
-  createTrackbar("Hue Max", "Trackbars", &hmax, 179);
-  createTrackbar("Sat Min", "Trackbars", &smin, 255);
-  createTrackbar("Sat Max", "Trackbars", &smax, 255);
-  createTrackbar("Val Min", "Trackbars", &vmin, 255);
-  createTrackbar("Val Max", "Trackbars", &vmax, 255);
+  // Preprocessing
+  cvtColor(img, imgGray, COLOR_BGR2GRAY);
+  GaussianBlur(imgGray, imgBlur, Size(3, 3), 3, 0);
+  Canny(imgBlur, imgCanny, 25, 75);
+  Mat kernel = getStructuringElement(MORPH_RECT, Size(3, 3));
+  dilate(imgCanny, imgDil, kernel);
 
-  while (true)
-  {
-    Scalar lower(hmin, smin, vmin);
-    Scalar upper(hmax, smax, vmax);
-    inRange(imgHSV, lower, upper, mask);
+  getContours(imgDil, img);
 
-    imshow("Image", img);
-    imshow("Image HSV", imgHSV);
-    imshow("Image Mask", mask);
-    waitKey(1);
-  }
+  imshow("Image", img);
+
+  waitKey(0);
 
   return 0;
+}
+
+void getContours(Mat imgDil, Mat img)
+{
+
+  vector<vector<Point>> contours;
+  vector<Vec4i> hierarchy;
+
+  findContours(imgDil, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+  // drawContours(img, contours, -1, Scalar(255, 0, 255), 2); // last parameter is thickness
+  vector<vector<Point>> conPoly(contours.size());
+  vector<Rect> boundRect(contours.size());
+  string objectType;
+
+  for (int i = 0; i < contours.size(); i++)
+  {
+    int area = contourArea(contours[i]);
+    cout << area << endl;
+
+    if (area > 1000)
+    {
+
+      float peri = arcLength(contours[i], true);
+
+      approxPolyDP(contours[i], conPoly[i], 0.02 * peri, true);
+
+      boundRect[i] = boundingRect(conPoly[i]);
+
+      int objCorner = (int)conPoly[i].size();
+
+      if (objCorner == 3)
+      {
+        objectType = "Tri";
+      }
+      else if (objCorner == 4)
+      {
+        objectType = "Rect";
+      }
+      else if (objCorner > 4)
+      {
+        objectType = "Circle";
+      }
+
+      drawContours(img, conPoly, i, Scalar(255, 0, 255), 2); // last parameter is thickness
+      rectangle(img, boundRect[i].tl(), boundRect[i].br(), Scalar(0, 255, 0), 5);
+      putText(img, objectType, {boundRect[i].x, boundRect[i].y - 5}, FONT_HERSHEY_PLAIN, 0.75, Scalar(0, 69, 255), 1);
+    }
+  }
 }
 
 /*
