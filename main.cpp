@@ -10,83 +10,30 @@ void getContours(Mat imgDil, Mat img);
 
 int main(int argc, char **argv)
 {
-
-  string path = "C:\\OPEN-CV Projects\\open-cv-intro\\Image-Processing\\Resources\\shapes.png";
+  string path = "C:\\OPEN-CV Projects\\open-cv-intro\\Image-Processing\\Resources\\test.png";
   Mat img = imread(path);
-  Mat imgGray, imgBlur, imgCanny, imgDil;
 
-  // Preprocessing
-  cvtColor(img, imgGray, COLOR_BGR2GRAY);
-  GaussianBlur(imgGray, imgBlur, Size(3, 3), 3, 0);
-  Canny(imgBlur, imgCanny, 25, 75);
-  Mat kernel = getStructuringElement(MORPH_RECT, Size(3, 3));
-  dilate(imgCanny, imgDil, kernel);
+  CascadeClassifier faceCascade;
+  faceCascade.load("C:\\OPEN-CV Projects\\open-cv-intro\\Image-Processing\\Resources\\haarcascade_frontalface_default.xml");
 
-  getContours(imgDil, img);
+  if (faceCascade.empty())
+  {
+    cout << "XML file couldn't loaded." << endl;
+  }
+
+  vector<Rect> faces;
+
+  faceCascade.detectMultiScale(img, faces, 1.1, 10);
+
+  for (size_t i = 0; i < faces.size(); i++)
+  {
+    rectangle(img, faces[i].tl(), faces[i].br(), Scalar(255, 0, 255), 3);
+  }
 
   imshow("Image", img);
-
   waitKey(0);
 
   return 0;
-}
-
-void getContours(Mat imgDil, Mat img)
-{
-
-  vector<vector<Point>> contours;
-  vector<Vec4i> hierarchy;
-
-  findContours(imgDil, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-  // drawContours(img, contours, -1, Scalar(255, 0, 255), 2); // last parameter is thickness
-  vector<vector<Point>> conPoly(contours.size());
-  vector<Rect> boundRect(contours.size());
-  string objectType;
-
-  for (int i = 0; i < contours.size(); i++)
-  {
-    int area = contourArea(contours[i]);
-    cout << area << endl;
-
-    if (area > 1000)
-    {
-
-      float peri = arcLength(contours[i], true);
-
-      approxPolyDP(contours[i], conPoly[i], 0.02 * peri, true);
-
-      boundRect[i] = boundingRect(conPoly[i]);
-
-      int objCorner = (int)conPoly[i].size();
-
-      if (objCorner == 3)
-      {
-        objectType = "Tri";
-      }
-      else if (objCorner == 4)
-      {
-
-        float aspRatio = (float)boundRect[i].width / (float)boundRect[i].height;
-
-        if (aspRatio > 0.95 && aspRatio < 1.05)
-        {
-          objectType = "Square";
-        }
-        else
-        {
-          objectType = "Rect";
-        }
-      }
-      else if (objCorner > 4)
-      {
-        objectType = "Circle";
-      }
-
-      drawContours(img, conPoly, i, Scalar(255, 0, 255), 2); // last parameter is thickness
-      rectangle(img, boundRect[i].tl(), boundRect[i].br(), Scalar(0, 255, 0), 5);
-      putText(img, objectType, {boundRect[i].x, boundRect[i].y - 5}, FONT_HERSHEY_PLAIN, 0.75, Scalar(0, 69, 255), 1);
-    }
-  }
 }
 
 /*
